@@ -2,8 +2,9 @@ import sys
 import socket
 import struct
 import textwrap
-import pcapy
 import binascii
+
+from pcapy import pcapy
 
 
 def main(pcap_filename):
@@ -53,7 +54,20 @@ def get_mac_addr(mac_bytes):
 
 def ipv4_packet(data):
 
-    print('Data: {}'.format(data))
+    
+    print('Data: {}'.format(data[0]))
+    print('Data: {}'.format(data[1]))
+    print('Data: {}'.format(data[2]))
+    print('Data: {}'.format(data[3]))
+    print('Data: {}'.format(data[4]))
+    print('Data: {}'.format(data[5]))
+    print('Data: {}'.format(data[6]))
+    print('Data: {}'.format(data[7]))
+    print('Data: {}'.format(data[8]))
+    print('Data: {}'.format(data[9]))
+    print('Data: {}'.format(data[10]))
+        
+    print('Raw_Data: {}'.format(data))
 
     # we must break open the ipv4 header before we get to the payload
     version_header_length = data[0]
