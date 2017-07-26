@@ -3,8 +3,8 @@ import socket
 import struct
 import textwrap
 import binascii
-
-from pcapy import pcapy
+import pcapy
+# from pcapy import pcapy
 
 
 def main(pcap_filename):
