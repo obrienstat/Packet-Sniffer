@@ -98,6 +98,11 @@ def get_mac_addr(mac_bytes):
     return ':'.join(mac_pairs).upper()
 
 
+# returns formated ipv4 address xxx.xxx.x.x
+def get_ipv4_addr(unformatted_addr):
+    return '.'.join(map(str, unformatted_addr))
+
+# returns formatted ipv6 address xxxx::xxxx
 def get_ipv6_addr(mac_bytes):
     return socket.inet_ntop(socket.AF_INET6, mac_bytes).upper()
 
@@ -129,12 +134,6 @@ def ipv4_packet(data):
     return proto, data[header_length:]
 
 
-# returns formated ipv4 address
-def get_ipv4_addr(unformatted_addr):
-    print(unformatted_addr)
-    return '.'.join(map(str, unformatted_addr))
-
-
 def ipv6_packet(data):
     """
         Breaks open the ipv6 header and returns the payload while
@@ -164,7 +163,7 @@ def icmp_packet(data):
     print('\t\tType: {}, Code: {}, CheckSum: {}'.format(_type, code, check_sum))
 
 
-def ipv6ICMP_packet(data):
+def icmp_v6_packet(data):
     print('ipv6icmp')
 
 
@@ -187,7 +186,7 @@ def tcp_segment(data):
     print('\t\tAcknowledgement: {}'.format(ack))
     print('\t\tPayload: {} bytes\n'.format(sys.getsizeof(data) - 33))
 
-    return data[offset:]
+    print(data[offset:])
 
 
 # Unpack UDP Segment
@@ -197,17 +196,7 @@ def udp_segment(data):
     print('\t\tDestination Port: {}'.format(dst_port))
     print('\t\tSize: {}'.format(size))
 
-    return data[8:]
-
-
-# Formats multi-line data
-def format_multi_line(prefix, string, size=80):
-    size -= len(prefix)
-    if isinstance(string, bytes):
-        string = ''.join(r'\x{:02x}'.format(byte) for byte in string)
-        if size % 2:
-            size -= 1
-    return '\n'.join([prefix + line for line in textwrap.wrap(string, size)])
+    print(data[8:])
 
 
 if __name__ == '__main__':
