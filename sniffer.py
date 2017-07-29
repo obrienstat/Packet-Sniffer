@@ -1,10 +1,16 @@
+"""
+    Created by Status O'Brien, all source codes and modifications have been
+    used from BuckyRobers (The New Boston) on github: https://github.com/buckyroberts/Python-Packet-Sniffer
+    This is my version of a packet sniffer
+"""
+
 import sys
 import socket
 import struct
 import textwrap
 import binascii
 import pcapy
-# from pcapy import pcapy
+# from pcapy import pcapy  # for when running on linux distro
 
 
 def main(pcap_filename):
@@ -29,30 +35,45 @@ def main(pcap_filename):
 
         dest_mac, src_mac, eth_proto, eth_data = ethernet_frame(raw_data)
         print('\nEthernet Frame: #{}'.format(i))
-        print('Destination MAC: {}, Source MAC: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))
+        print('Destination MAC: {}, Source MAC: {}'.format(dest_mac, src_mac))
 
         # for all IPv4 traffic
         if eth_proto == 8:
-            print('\n\tIPv4')
+            print('\nEthernet Protocol: IPv4')
             ipv4_proto, ipv4_data = ipv4_packet(eth_data)
 
             # TCP
             if ipv4_proto == 6:
-                print('\n\t\tTCP Segment:')
+                print('\tProtocol: TCP')
                 tcp_segment(ipv4_data)
 
             # ICMP
             elif ipv4_proto == 1:
-                print('\n\t\tICMP Packet:')
+                print('\tProtocol: ICMP')
                 icmp_packet(ipv4_data)
 
             # UDP
             elif ipv4_proto == 17:
-                print('\n\t\tUDP Segment:')
+                print('\tProtocol: UDP')
+                udp_segment(ipv4_data)
 
         # must be IPv6 traffic
+        elif eth_proto == 56710:
+            print('\nEthernet Protocol: IPv6')
+            next_header, data = ipv6_packet(eth_data)
+
+            # TCP
+            if next_header == 6:
+                print('\tProtocol: TCP')
+                tcp_segment(data)
+
+            # UDP
+            elif next_header == 17:
+                print('\tProtocol: UDP')
+                udp_segment(data)
+
         else:
-            ipv6_packet(eth_data)
+            print('\n\tUnknown Protocol: {}'.format(eth_proto))
 
     # end of file
     print('\nFile reading end')
@@ -77,6 +98,10 @@ def get_mac_addr(mac_bytes):
     return ':'.join(mac_pairs).upper()
 
 
+def get_ipv6_addr(mac_bytes):
+    return socket.inet_ntop(socket.AF_INET6, mac_bytes).upper()
+
+
 def ipv4_packet(data):
     """
         The function strips the IPv4 Header so we can determine the ip addresses,
@@ -97,7 +122,6 @@ def ipv4_packet(data):
     print('\tVersion: {}'.format(version))
     print('\tHeader Length: {}'.format(header_length))
     print('\tTTL: {}'.format(ttl))
-    print('\tProtocol: {}'.format(proto))
     print('\tFrom: {}'.format(get_ipv4_addr(src)))
     print('\tTo: {}'.format(get_ipv4_addr(target)))
 
@@ -107,6 +131,7 @@ def ipv4_packet(data):
 
 # returns formated ipv4 address
 def get_ipv4_addr(unformatted_addr):
+    print(unformatted_addr)
     return '.'.join(map(str, unformatted_addr))
 
 
@@ -114,17 +139,33 @@ def ipv6_packet(data):
     """
         Breaks open the ipv6 header and returns the payload while
         printing all the relevant information inside the header
-        
-    :param data: the ipv6 data
-    :return: the payload
     """
-    print('unpack the ipv6 header to retrieve the payload')
+    version = data[0] >> 4
+    traffic_class = (data[0] & 0xF) * 16 + (data[1] >> 4)
+    payload_length = int(binascii.hexlify(data[4:6]).decode('ascii'), 16)  # this sucked! must be a better way
+    next_header = data[6]
+    hop_limit = data[7]
+    src_address = get_ipv6_addr(data[8:24])
+    target_address = get_ipv6_addr(data[24:40])
+
+    print('\tVersion: {}'.format(version))
+    print('\tTraffic Class: {}'.format(traffic_class))
+    print('\tHop Limit: {}'.format(hop_limit))
+    print('\tFrom: {}'.format(src_address))
+    print('\tTo: {}'.format(target_address))
+    print('\tPayload: {} bytes'.format(payload_length))
+
+    return next_header, data[40:]  # return our payload length
 
 
 # Unpack the ICMP packet
 def icmp_packet(data):
     _type, code, check_sum = struct.unpack('! B B H', data[:4])
     print('\t\tType: {}, Code: {}, CheckSum: {}'.format(_type, code, check_sum))
+
+
+def ipv6ICMP_packet(data):
+    print('ipv6icmp')
 
 
 # Unpack the TCP packet/segment
@@ -139,13 +180,14 @@ def tcp_segment(data):
     flag_rst = (offset_r_flags & 4) >> 2
     flag_syn = (offset_r_flags & 2) >> 1
     flag_fin = offset_r_flags & 1
-    data = data[offset:]
 
     print('\t\tSource Port: {}'.format(src_port))
     print('\t\tDestination Port: {}'.format(dest_port))
     print('\t\tSequence: {}'.format(sequence))
     print('\t\tAcknowledgement: {}'.format(ack))
-    print(format_multi_line('\t\t\t', data))
+    print('\t\tPayload: {} bytes\n'.format(sys.getsizeof(data) - 33))
+
+    return data[offset:]
 
 
 # Unpack UDP Segment
