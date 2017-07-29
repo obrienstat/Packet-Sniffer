@@ -1,13 +1,14 @@
 """
-    Created by Status O'Brien, all source codes and modifications have been
-    used from BuckyRobers (The New Boston) on github: https://github.com/buckyroberts/Python-Packet-Sniffer
+    Created by Status O'Brien on 29/07/17,
+    Some source code and modifications have been taken from BuckyRobers (The New Boston)
+    on github: https://github.com/buckyroberts/Python-Packet-Sniffer
+
     This is my version of a packet sniffer
 """
 
 import sys
 import socket
 import struct
-import textwrap
 import binascii
 import pcapy
 # from pcapy import pcapy  # for when running on linux distro
@@ -102,6 +103,7 @@ def get_mac_addr(mac_bytes):
 def get_ipv4_addr(unformatted_addr):
     return '.'.join(map(str, unformatted_addr))
 
+
 # returns formatted ipv6 address xxxx::xxxx
 def get_ipv6_addr(mac_bytes):
     return socket.inet_ntop(socket.AF_INET6, mac_bytes).upper()
@@ -169,8 +171,6 @@ def icmp_v6_packet(data):
 
 # Unpack the TCP packet/segment
 def tcp_segment(data):
-
-    # need the src port and stuff
     (src_port, dest_port, sequence, ack, offset_r_flags) = struct.unpack('! H H L L H', data[:14])
     offset = (offset_r_flags >> 12) * 4
     flag_urg = (offset_r_flags & 32) >> 5
