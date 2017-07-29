@@ -10,8 +10,8 @@ import sys
 import socket
 import struct
 import binascii
-import pcapy
-# from pcapy import pcapy  # for when running on linux distro
+# import pcapy
+from pcapy import pcapy  # for when running on linux distro
 
 
 def main(pcap_filename):
